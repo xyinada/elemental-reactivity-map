@@ -11,18 +11,18 @@ import ml
 import vis
 
 # setting file
-settings = data.load_settings("./example/config/mp_example.json")
+config = data.load_config("./example/config/mp_example.json")
 
 # gen dataset
-data.element_set_train_test_split(settings)
-knn.gen_rn_training_data(settings)
+data.element_set_train_test_split(config)
+knn.gen_rn_training_data(config)
 
 # train
-ml.train_all_settings(settings)
+ml.train_all_config(config)
 
 # visualize
-vis.visualize_test_prediction(settings)
-vis.gen_heatmap_all(settings)
+vis.visualize_test_prediction(config)
+vis.gen_heatmap_all(config)
 
 # save result
-vis.save_vals_all(settings)
+vis.save_vals_all(config)

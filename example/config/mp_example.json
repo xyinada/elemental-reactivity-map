@@ -1,6 +1,7 @@
 {
-    "directories": {
+    "files_and_directories": {
         "data_source_file": "./example/data/mp.csv",
+        "source_name": "mp",
         "save_dir": "./example/result_mp"
     },
     "condition": {
@@ -16,9 +17,9 @@
     },
     "data": {
         "data_num":{
-            "positive_test_data": 2500,
+            "positive_test_data": 2000,
             "positive_train_data": 10000,
-            "unlabeled_test_data": 2500,
+            "unlabeled_test_data": 2000,
             "reliable_negative_train_data": 10000},
         "parameters": {
             "knn_k_list": [1, 2, 3, 4, 5],
