@@ -503,7 +503,7 @@ def unlabeled_predvals_vs_knnscore_score_plot(config):
                 plt.xlabel("Average top-k similarity score")
                 plt.ylabel("Predicted Value")
                 plt.title("Training data")
-                plt.savefig(folder+r"\fig\train_knn_vs_prediction\{}.png")
+                plt.savefig(folder+"/fig/train_knn_vs_prediction/{}.png")
                 
                 fig = plt.figure(figsize=(10,10))
                 plt.plot(test_knnscore, test_prediction)
@@ -511,4 +511,4 @@ def unlabeled_predvals_vs_knnscore_score_plot(config):
                 plt.xlabel("Average top-k similarity score")
                 plt.ylabel("Predicted Value")
                 plt.title("Test data")
-                plt.savefig(folder+r"\fig\test_knn_vs_prediction\{}.png")
+                plt.savefig(folder+"/fig/test_knn_vs_prediction/{}.png")
