@@ -170,7 +170,7 @@ def select_test_data(elemsets, config):
     else config["data"]["data_num"]["positive_test_data"]:
         positive_test_num = int(len(positive_elemsets)*float(config["data"]["data_num"]["positive_test_data"]))
     unlabeled_test_num = int(config["data"]["data_num"]["unlabeled_test_data"])
-    if not "positive_train_data" in config["data"]["data_num"] or config["data"]["data_num"]["positive_train_data"] <= 0:
+    if not "positive_train_data" in config["data"]["data_num"] or int(config["data"]["data_num"]["positive_train_data"]) <= 0:
         positive_train_num = len(positive_elemsets)-positive_test_num
     else:
         positive_train_num = int(config["data"]["data_num"]["positive_train_data"])
@@ -182,10 +182,7 @@ def select_test_data(elemsets, config):
     print(len(positive_train))
     print(len(unlabeled_train)+len(unlabeled_test))
     print(len(positive_elemsets)+len(unlabeled_test)+len(unlabeled_train))
-    try:
-        os.mkdir(folder+"\\data")
-    except:
-        pass
+    os.mkdirs(config["files_and_directories"]["save_dir"]+"/train_and_test_data", exist_ok=True)
     
     with open(config["files_and_directories"]["save_dir"]+"/train_and_test_data/positive_all.pkl", "wb") as f:
         pickle.dump(positive_elemsets, f)
