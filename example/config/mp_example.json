@@ -20,7 +20,9 @@
             "positive_test_data": 2000,
             "positive_train_data": 10000,
             "unlabeled_test_data": 2000,
-            "reliable_negative_train_data": 10000},
+            "reliable_negative_train_data": 10000,
+            "positive_train_data_dup": "auto"
+        },
         "parameters": {
             "knn_k_list": [1, 2, 3, 4, 5],
             "rn_lower_ratio_list": [0.25, 0.5, 0.75, 0.8, 0.85, 0.9, 0.95, 1],
@@ -32,11 +34,11 @@
         }
     },
     "leraning": {
-        "learning_rate": 0.0001,
-        "batch_size": 100,
-        "epoch": 100,
-        "node_nums": [128, 128, 128, 1],
-        "model_nums": 10
+        "learning_rate": [0.0001],
+        "batch_size": [100],
+        "epoch": [100],
+        "node_nums": [[128, 128, 128, 1]],
+        "model_num": 10
     },
     "heatmaps": [
         {
@@ -53,7 +55,7 @@
                         "name": "",
                         "ratio": 0.5
                     },
-                    "mark": "",
+                    "mark": "★",
                     "label": "MP",
                     "square_color": "r"
                 },
@@ -68,7 +70,7 @@
                         "name": "",
                         "ratio": 0.5
                     },
-                    "mark": "",
+                    "mark": "◆",
                     "label": "ICSD (HQ)",
                     "square_color": "b"
                 },
@@ -83,7 +85,7 @@
                         "name": "",
                         "ratio": 0.5
                     },
-                    "mark": "",
+                    "mark": "▲",
                     "label": "ICSD (LQ)",
                     "square_color": "b"
                 }
@@ -91,7 +93,7 @@
         },
         {
             "name": "heatmap_mp_blue",
-            "mark_source_file": []
+            "mark_sources": []
         }
     ]
 }
