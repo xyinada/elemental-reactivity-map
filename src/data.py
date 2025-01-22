@@ -31,7 +31,7 @@ import pandas as pd
 
 random.seed(0)
 
-def load_settings(path):
+def load_settings_(path):
     print("Load settings.")
     with open(path, "r") as f:
         lines = f.readlines()
@@ -55,34 +55,41 @@ def load_settings(path):
             ret[l[0]] = l[1]
     return ret
 
-def element_set_train_test_split(settings):
-    print("Make training and test data.")
-    elemsets = load_element_set_data(settings)
-    select_test_data(elemsets, settings)
+def load_config(path):
+    print("Load config.")
+    with open(filename, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    return data
 
-def load_element_set_data(settings):
-    path = settings["source_folder"]+"\\"+settings["source_file"]+".csv"
-    with open(settings["save_folder"]+r"\about_data.csv", "w") as f:
+def element_set_train_test_split(config):
+    print("Make training and test data.")
+    elemsets = load_element_set_data(config)
+    select_test_data(elemsets, config)
+
+def load_element_set_data(config):
+    path = config["files_and_directories"]["data_source_file"]
+    os.makedirs(config["files_and_directories"]["save_dir"], exist_ok=True)
+    with open(config["files_and_directories"]["save_dir"]+"/about_data.csv", "w") as f:
         df = pd.read_csv(path)
         f.write("source_data_num, {}\n".format(len(df)))
-        df = df.dropna(subset=[settings["property_column"], settings["composition_column"]])
+        df = df.dropna(subset=[config["condition"]["property_column_name"], config["condition"]["composition_column_name"]])
         f.write("property_data_num, {}\n".format(len(df)))
-        if settings["property_selection_method"] == "range":
-            df = df[df[settings["property_column"]] >= float(settings["property_min"])]
-            df = df[df[settings["property_column"]] <= float(settings["property_max"])]
-        elif settings["property_selection_method"] == "high":
-            df = df.sort_values(settings["property_column"], ascending=False)
-            n = int(len(df)*float(settings["property_selection_ratio"]))
+        if config["condition"]["property_selection_method"] == "range":
+            df = df[df[config["condition"]["property_column"]] >= float(config["condition"]["property_filter"]["value_min"])]
+            df = df[df[config["condition"]["property_column"]] <= float(config["condition"]["property_filter"]["value_max"])]
+        elif config["condition"]["property_selection_method"] == "high":
+            df = df.sort_values(config["condition"]["property_column_name"], ascending=False)
+            n = int(len(df)*float(config["condition"]["property_filter"]["ratio"]))
             df = df.head(n)
-        elif settings["property_selection_method"] == "low":
-            df = df.sort_values(settings["property_column"], ascending=True)
-            n = int(len(df)*float(settings["property_selection_ratio"]))
+        elif config["condition"]["property_selection_method"] == "low":
+            df = df.sort_values(config["condition"]["property_column_name"], ascending=True)
+            n = int(len(df)*float(config["condition"]["property_filter"]["ratio"]))
             df = df.head(n)
-        elif settings["property_selection_method"] == "name":
-            df = df[df[settings["property_column"]]==settings["property_name"]]
+        elif config["condition"]["property_selection_method"] == "name":
+            df = df[df[config["condition"]["property_column_name"]]==config["condition"]["property_filter"]["name"]]
         f.write("property_data_in_range_num, {}\n".format(len(df)))
-        elems = set(load_element_parameter_from_settings(settings).keys())
-        cmps = df[settings["composition_column"]]
+        elems = set(load_element_parameter_from_config(config).keys())
+        cmps = df[config["condition"]["composition_column_name"]]
         cmps = set(cmps.values)
         f.write("unique_composition_num, {}\n".format(len(cmps)))
         ess = set()
@@ -102,9 +109,9 @@ def load_element_set_data(settings):
         f.write("positive_element_set_num, {}\n".format(len(ess)))
     return list(ess)
 
-def load_compounds_data(settings, source_file, composition_column, property_column, method,
+def load_compounds_data(config, source_file, composition_column, property_column, method,
                         property_min=0, property_max=0, property_name="", property_selection_ratio=0):
-    path = settings["source_folder"]+"\\"+source_file+".csv"
+    path = config["files_and_directories"]["data_source_file"]
     df = pd.read_csv(path)
     df = df[df[composition_column] != ""]
     df = df.dropna(subset=[property_column, composition_column])
@@ -121,7 +128,7 @@ def load_compounds_data(settings, source_file, composition_column, property_colu
         df = df.head(n)
     elif method == "name":
         df = df[df[property_column]==property_name]
-    elems = set(load_element_parameter_from_settings(settings).keys())
+    elems = set(load_element_parameter_from_config(config).keys())
     cmps = df[composition_column]
     cmps = set(cmps.values)
     cmp_dict = collections.defaultdict(list)
@@ -140,9 +147,9 @@ def load_compounds_data(settings, source_file, composition_column, property_colu
             pass
     return cmp_dict
 
-def select_test_data(elemsets, settings):
-    folder = settings["save_folder"]
-    elems = list(load_element_parameter_from_settings(settings).keys())
+def select_test_data(elemsets, config):
+    path = config["files_and_directories"]["save_dir"]
+    elems = list(load_element_parameter_from_config(config).keys())
     
     elemsets_set = set(elemsets)
     fins = set()
@@ -158,15 +165,15 @@ def select_test_data(elemsets, settings):
     positive_elemsets = copy.deepcopy(elemsets)
     random.shuffle(positive_elemsets)
     random.shuffle(unlabeled_elemsets)
-    if settings["positive_test_data"] == "num":
-        positive_test_num = int(settings["positive_test_data_num"])
-    elif settings["positive_test_data"] == "ratio":
-        positive_test_num = int(len(positive_elemsets)*float(settings["positive_test_data_ratio"]))
-    unlabeled_test_num = int(settings["unlabeled_test_data_num"])
-    if not "positive_train_data_num" in settings:
+    if config["data"]["data_num"]["positive_test_data"] >= 1:
+        positive_test_num = int(["data"]["data_num"]["positive_test_data"])
+    else config["data"]["data_num"]["positive_test_data"]:
+        positive_test_num = int(len(positive_elemsets)*float(config["data"]["data_num"]["positive_test_data"]))
+    unlabeled_test_num = int(config["data"]["data_num"]["unlabeled_test_data"])
+    if not "positive_train_data" in config["data"]["data_num"] or int(config["data"]["data_num"]["positive_train_data"]) <= 0:
         positive_train_num = len(positive_elemsets)-positive_test_num
     else:
-        positive_train_num = int(settings["positive_train_data_num"])
+        positive_train_num = int(config["data"]["data_num"]["positive_train_data"])
     positive_test = positive_elemsets[:positive_test_num]
     positive_train = positive_elemsets[positive_test_num:positive_test_num+positive_train_num]
     unlabeled_test = unlabeled_elemsets[:unlabeled_test_num]
@@ -175,29 +182,27 @@ def select_test_data(elemsets, settings):
     print(len(positive_train))
     print(len(unlabeled_train)+len(unlabeled_test))
     print(len(positive_elemsets)+len(unlabeled_test)+len(unlabeled_train))
-    try:
-        os.mkdir(folder+"\\data")
-    except:
-        pass
+    os.mkdirs(config["files_and_directories"]["save_dir"]+"/train_and_test_data", exist_ok=True)
     
-    with open(folder+"\\data\\positive_all.pkl", "wb") as f:
+    with open(config["files_and_directories"]["save_dir"]+"/train_and_test_data/positive_all.pkl", "wb") as f:
         pickle.dump(positive_elemsets, f)
-    with open(folder+"\\data\\positive_test.pkl", "wb") as f:
+    with open(config["files_and_directories"]["save_dir"]+"/train_and_test_data/positive_test.pkl", "wb") as f:
         pickle.dump(positive_test, f)
-    with open(folder+"\\data\\positive_train.pkl", "wb") as f:
+    with open(config["files_and_directories"]["save_dir"]+"/train_and_test_data/positive_train.pkl", "wb") as f:
         pickle.dump(positive_train, f)
-    with open(folder+"\\data\\unlabeled_all.pkl", "wb") as f:
+    with open(config["files_and_directories"]["save_dir"]+"/train_and_test_data/unlabeled_all.pkl", "wb") as f:
         pickle.dump(unlabeled_elemsets, f)
-    with open(folder+"\\data\\unlabeled_test.pkl", "wb") as f:
+    with open(config["files_and_directories"]["save_dir"]+"/train_and_test_data/unlabeled_test.pkl", "wb") as f:
         pickle.dump(unlabeled_test, f)
-    with open(folder+"\\data\\unlabeled_train.pkl", "wb") as f:
+    with open(config["files_and_directories"]["save_dir"]+"/train_and_test_data/unlabeled_train.pkl", "wb") as f:
         pickle.dump(unlabeled_train, f)
-    with open(settings["save_folder"]+r"\about_data.csv", "a") as f:
+    with open(config["files_and_directories"]["save_dir"]+"/about_data.csv", "a") as f:
         f.write("positive_test_data_num,"+str(len(positive_test)))
 
-def load_element_parameter_from_settings(settings):
-    element_parameter_paths = [settings["element_parameter_folder"]+"\\"+epn+".csv" for epn in settings["element_parameter"].split("-")]
-    element_parameter = load_element_parameters(element_parameter_paths, [int(pn) for pn in settings["parameter_num"].split("-")])
+def load_element_parameter_from_config(config):
+    element_parameter_paths = [d["source_file"] for d in config["data"]["parameters"]["element_parameter"]]
+    element_parameter_nums = [int(d["dim"]) for d in config["data"]["parameters"]["element_parameter"]]
+    element_parameter = load_element_parameters(element_parameter_paths, element_parameter_nums)
     return element_parameter
 
 def load_element_parameter(path,parameter_nums):
@@ -207,7 +212,7 @@ def load_element_parameter(path,parameter_nums):
     _ = next(reader)
     i = 0
     for row in reader:
-        data_dict[row[0]] = list(map(float,row[1:parameter_nums[i]+1]))
+        data_dict[row[0]] = list(map(float, row[1:parameter_nums[i]+1]))
     f.close()
     return data_dict
 

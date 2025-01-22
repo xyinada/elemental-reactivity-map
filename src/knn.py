@@ -19,26 +19,26 @@ import matplotlib.pyplot as plt
 
 import data
 
-def gen_rn_training_data(settings):
+def gen_rn_training_data(config):
     print("Calculate unlabeled data similarity to positive data.")
-    calc_unlabeled_similarity_with_positive(settings)
+    calc_unlabeled_similarity_with_positive(config)
     print("Select reliable negative data.")
-    knn_selection(settings)
+    knn_selection(config)
 
-def knn_selection(settings):
-    folder = settings["save_folder"]
-    for knn_k in [int(knn_k) for knn_k in settings["knn_k"]]:
-        positively_scores = calc_positively_scores(knn_k, settings)
-        for rn_lower_ratio in [float(r) for r in settings["rn_lower_ratio"]]:
+def knn_selection(config):
+    folder = config["files_and_directories"]["save_dir"]
+    for knn_k in [int(knn_k) for knn_k in config["data"]["properties"]["knn_k_list"]]:
+        positively_scores = calc_positively_scores(knn_k, config)
+        for rn_lower_ratio in [float(r) for r in config["data"]["properties"]["rn_lower_ratio_list"]]:
             n = int(len(positively_scores)*rn_lower_ratio)
-            idxs = random.sample(list(range(n)), int(settings["rn_train_data_num"]))
+            idxs = random.sample(list(range(n)), int(config["data"]["data_num"]["reliable_negative_train_data"]))
             train_data = [positively_scores[i][0] for i in idxs]
-            with open(folder+r"\data\rn_knn-k={}_rn-lower-ratio={}_train.pkl".format(knn_k, rn_lower_ratio), "wb") as f:
+            with open(folder+"/train_and_test_data/rn_knn-k={}_rn-lower-ratio={}_train.pkl".format(knn_k, rn_lower_ratio), "wb") as f:
                 pickle.dump(train_data, f)
 
-def calc_positively_scores(knn_k, settings):
-    folder = settings["save_folder"]
-    with open(folder+r"\data\unlabeled_similarity_with_positive_sorted.pkl", "rb") as f:
+def calc_positively_scores(knn_k, config):
+    folder = config["files_and_directories"]["save_dir"]
+    with open(folder+"/train_and_test_data/unlabeled_similarity_with_positive_sorted.pkl", "rb") as f:
         similarity_data = pickle.load(f)
     ret = []
     for k, vs in similarity_data.items():
@@ -46,24 +46,16 @@ def calc_positively_scores(knn_k, settings):
     ret = sorted(ret, key=lambda x:x[1])
     return ret
 
-def calc_unlabeled_similarity_with_positive(settings):
-    folder = settings["save_folder"]
-    if not "positive_train_data_num" in settings:
-        with open(folder+"\\data\\positive_train.pkl", "rb") as f:
-            positive_train = pickle.load(f)
-    else:
-        with open(folder+"\\data\\positive_test.pkl", "rb") as f:
-            pote = set(pickle.load(f))
-        with open(folder+"\\data\\positive_all.pkl", "rb") as f:
-            poal = pickle.load(f)
-        positive_train = [pa for pa in poal if not pa in pote]
-        random.shuffle(positive_train)
-    with open(folder+"\\data\\unlabeled_train.pkl", "rb") as f:
+def calc_unlabeled_similarity_with_positive(config):
+    folder = config["files_and_directories"]["save_dir"]
+    with open(folder+"/train_and_test_data/positive_train.pkl", "rb") as f:
+        positive_train = pickle.load(f)
+    with open(folder+"/train_and_test_data/unlabeled_train.pkl", "rb") as f:
         unlabeled_train = pickle.load(f)
     
-    max_k = max([int(k) for k in settings["knn_k"]])
+    max_k = max([int(k) for k in config["data"]["parameters"]["knn_k"]])
     
-    elem_parameter = data.load_element_parameter_from_settings(settings)
+    elem_parameter = data.load_element_parameter_from_config(config)
     sim_data, elem_rank_dict = calc_element_similarity(elem_parameter)
 
     elem_list = list(elem_parameter.keys())
@@ -80,27 +72,19 @@ def calc_unlabeled_similarity_with_positive(settings):
         p_train_idx.append(tuple([elem_dict[t] for t in tt]))
     
     unlabeled_similarity_scores = calc_similarity_scores_sorted(unlabeled_train, p_train_idx, sim_array, elem_dict, max_k, elem_num)
-    with open(folder+r"\data\unlabeled_similarity_with_positive_sorted.pkl", "wb") as f:
+    with open(folder+"/train_and_test_data/unlabeled_similarity_with_positive_sorted.pkl", "wb") as f:
         pickle.dump(unlabeled_similarity_scores, f)
 
-def calc_unlabeld_test_similarity_with_positive_train(settings):
-    folder = settings["save_folder"]
-    if not "positive_train_data_num" in settings:
-        with open(folder+"\\data\\positive_train.pkl", "rb") as f:
-            positive_train = pickle.load(f)
-    else:
-        with open(folder+"\\data\\positive_test.pkl", "rb") as f:
-            pote = set(pickle.load(f))
-        with open(folder+"\\data\\positive_all.pkl", "rb") as f:
-            poal = pickle.load(f)
-        positive_train = [pa for pa in poal if not pa in pote]
-        random.shuffle(positive_train)
-    with open(folder+"\\data\\unlabeled_test.pkl", "rb") as f:
+def calc_unlabeld_test_similarity_with_positive_train(config):
+    folder = config["files_and_directories"]["save_dir"]
+    with open(folder+"/train_and_test_data/positive_train.pkl", "rb") as f:
+        positive_train = pickle.load(f)
+    with open(folder+"/train_and_test_data/unlabeled_test.pkl", "rb") as f:
         unlabeled_train = pickle.load(f)
     
-    max_k = max([int(k) for k in settings["knn_k"]])
+    max_k = max([int(k) for k in config["data"]["parameters"]["knn_k"]])
     
-    elem_parameter = data.load_element_parameter_from_settings(settings)
+    elem_parameter = data.load_element_parameter_from_config(config)
     sim_data, elem_rank_dict = calc_element_similarity(elem_parameter)
 
     elem_list = list(elem_parameter.keys())
@@ -117,7 +101,7 @@ def calc_unlabeld_test_similarity_with_positive_train(settings):
         p_train_idx.append(tuple([elem_dict[t] for t in tt]))
     
     unlabeled_similarity_scores = calc_similarity_scores_sorted(unlabeled_train, p_train_idx, sim_array, elem_dict, max_k, elem_num)
-    with open(folder+r"\data\unlabeled_test_similarity_with_positive_train_sorted.pkl", "wb") as f:
+    with open(folder+"/train_and_test_data/unlabeled_test_similarity_with_positive_train_sorted.pkl", "wb") as f:
         pickle.dump(unlabeled_similarity_scores, f)
 
 def calc_element_similarity(element_parameter):

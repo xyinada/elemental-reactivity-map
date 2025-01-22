@@ -46,44 +46,41 @@ def build_model(node_nums,vec_len,l_rate):
                    loss=tf.keras.losses.BinaryCrossentropy())
     return model
 
-def train_all_settings(settings):
+def train_all_config(config):
     print("Train models.")
-    iters = itertools.product([int(k) for k in settings["knn_k"]],
-                              [float(rn_lower_ratio) for rn_lower_ratio in settings["rn_lower_ratio"]],
-                              [float(l_rate) for l_rate in settings["learning_rate"]],
-                              [int(batch_size) for batch_size in settings["batch_size"]],
-                              [int(epoch) for epoch in settings["epoch"]],
-                              [node_nums for node_nums in settings["node_nums"]])
+    iters = itertools.product([int(k) for k in  config["data"]["parameters"]["knn_k"]],
+                              [float(rn_lower_ratio) for rn_lower_ratio in  config["data"]["parameters"]["rn_lower_ratio"]],
+                              [float(l_rate) for l_rate in config["learning"]["learning_rate"]],
+                              [int(batch_size) for batch_size in config["learning"]["batch_size"]],
+                              [int(epoch) for epoch in config["learning"]["epoch"]],
+                              [node_nums for node_nums in config["learning"]["node_nums"]])
     iters = list(iters)
     for knn_k, rn_lower_ratio, l_rate, batch_size, epoch, node_nums in tqdm.tqdm(iters):
-        train_and_evaluate(settings, knn_k, rn_lower_ratio, l_rate, batch_size, epoch, node_nums)
+        train_and_evaluate(config, knn_k, rn_lower_ratio, l_rate, batch_size, epoch, node_nums)
 
-def train_and_evaluate(settings, knn_k, rn_lower_ratio, l_rate, batch_size, epoch, node_nums):
-    model_folder = settings["save_folder"]+r"\ml_model\knn-k={}_rnlr={}_lr={}_bs={}_ep={}_nn={}".format(knn_k, rn_lower_ratio, l_rate, batch_size, epoch, node_nums)
+def train_and_evaluate(config, knn_k, rn_lower_ratio, l_rate, batch_size, epoch, node_nums):
+    model_folder = config["files_and_directories"]["save_dir"]+"/ml_model/knn-k={}_rnlr={}_lr={}_bs={}_ep={}_nn={}".format(knn_k, rn_lower_ratio, l_rate, batch_size, epoch, node_nums)
     print(model_folder)
-    try:
-        os.mkdir(model_folder)
-    except:
-        pass
-    input_data = make_input_data(settings, knn_k, rn_lower_ratio)
-    train_models(settings, model_folder, l_rate, batch_size, epoch, node_nums, input_data)
-    evaluate_models(settings, model_folder, input_data)
+    os.mkdirs(model_folder, exist_ok=True)
+    input_data = make_input_data(config, knn_k, rn_lower_ratio)
+    train_models(config, model_folder, l_rate, batch_size, epoch, node_nums, input_data)
+    evaluate_models(config, model_folder, input_data)
 
-def train_models(settings, model_folder, l_rate, batch_size, epoch, node_nums, input_data):
-    vec_len = sum([int(x) for x in settings["parameter_num"].split("-")])
-    for i in range(int(settings["model_make_num"])):
+def train_models(config, model_folder, l_rate, batch_size, epoch, node_nums, input_data):
+    vec_len = sum([int(x) for x in config["data"]["parameters"]["element_parameter"]["dim"]])
+    for i in range(int(config["learning"]["model_num"])):
         model = build_model([int(nns) for nns in node_nums.split("-")], vec_len, l_rate)
         history = model.fit(input_data["train_x"],input_data["train_y"],
                             validation_data=[input_data["test_x"],input_data["test_y"]],
                             batch_size=batch_size, epochs=epoch, verbose=0)
-        model.save(model_folder+r"\model_{}.tf".format(i))
+        model.save(model_folder+"/model_{}.tf".format(i))
         hist_df = pd.DataFrame(history.history)
-        hist_df.to_csv(model_folder+r'\history_{}.csv'.format(i))
+        hist_df.to_csv(model_folder+'/history_{}.csv'.format(i))
         tf.keras.backend.clear_session()
         del model
 
-def element_set_to_input(ess, settings):
-    elem_parameter = data.load_element_parameter_from_settings(settings)
+def element_set_to_input(ess, config):
+    elem_parameter = data.load_element_parameter_from_config(config)
     ret = []
     for es in ess:
         e = list(es)
@@ -93,18 +90,18 @@ def element_set_to_input(ess, settings):
     ret = np.array(ret, dtype=np.float32)
     return ret
 
-def make_input_data(settings, knn_k, rn_lower_ratio):
-    folder = settings["save_folder"]
-    with open(folder+"\\data\\positive_train.pkl", "rb") as f:
+def make_input_data(config, knn_k, rn_lower_ratio):
+    folder = config["files_and_directories"]["save_dir"]
+    with open(folder+"/train_and_test_data/positive_train.pkl", "rb") as f:
         positive_train = pickle.load(f)
-    with open(folder+"\\data\\rn_knn-k={}_rn-lower-ratio={}_train.pkl".format(knn_k,rn_lower_ratio), "rb") as f:
+    with open(folder+"/train_and_test_data/rn_knn-k={}_rn-lower-ratio={}_train.pkl".format(knn_k,rn_lower_ratio), "rb") as f:
         rn_train = pickle.load(f)
-    with open(folder+"\\data\\positive_test.pkl", "rb") as f:
+    with open(folder+"/train_and_test_data/positive_test.pkl", "rb") as f:
         positive_test = pickle.load(f)
-    with open(folder+"\\data\\unlabeled_test.pkl", "rb") as f:
+    with open(folder+"/train_and_test_data/unlabeled_test.pkl", "rb") as f:
         unlabeled_test = pickle.load(f)
     
-    if settings["positive_train_data_dup"] == "auto":
+    if config["data"]["data_num"]["positive_train_data_dup"] == "auto":
         random.shuffle(positive_train)
         idx = 0
         orig_poslen = len(positive_train)
@@ -112,15 +109,15 @@ def make_input_data(settings, knn_k, rn_lower_ratio):
             positive_train.append(positive_train[idx])
             idx = (idx+1)%orig_poslen
     else:
-        positive_train = positive_train*int(settings["positive_train_data_dup"])
+        positive_train = positive_train*int(config["data"]["data_num"]["positive_train_data_dup"])
 
     input_data = {}
-    input_data["train_x"] = np.vstack([element_set_to_input(positive_train, settings),
-                                       element_set_to_input(rn_train, settings)])
+    input_data["train_x"] = np.vstack([element_set_to_input(positive_train, config),
+                                       element_set_to_input(rn_train, config)])
     input_data["train_y"] = np.vstack([np.ones(shape=(len(positive_train),1)),
                                        np.zeros(shape=(len(rn_train),1))])
-    input_data["test_x"] = np.vstack([element_set_to_input(positive_test, settings),
-                                      element_set_to_input(unlabeled_test, settings)])
+    input_data["test_x"] = np.vstack([element_set_to_input(positive_test, config),
+                                      element_set_to_input(unlabeled_test, config)])
     input_data["test_y"] = np.vstack([np.ones(shape=(len(positive_test),1)),
                                       np.zeros(shape=(len(unlabeled_test),1))])
     return input_data
@@ -136,7 +133,7 @@ def predict(model_folder, xs):
     preds = np.clip(a=preds, a_min=0., a_max=1.)
     return preds
 
-def evaluate_models(settings, model_folder, input_data):
+def evaluate_models(model_folder, input_data):
     ths = [t/10 for t in range(1,10)]
     positive_overthreshold = {}
     unlabeled_overthreshold = {}
@@ -150,12 +147,12 @@ def evaluate_models(settings, model_folder, input_data):
         positive_overthreshold[th] = sum([p >= th for p in positive_ps])/len(positive_ps)
         unlabeled_overthreshold[th] = sum([p >= th for p in unlabeled_ps])/len(unlabeled_ps)
     
-    with open(model_folder+r"\sorted_predicted_value_for_positive_test.pkl", "wb") as f:
+    with open(model_folder+"/sorted_predicted_value_for_positive_test.pkl", "wb") as f:
         pickle.dump(positive_ps, f)
-    with open(model_folder+r"\sorted_predicted_value_for_unlabeled_test.pkl", "wb") as f:
+    with open(model_folder+"/sorted_predicted_value_for_unlabeled_test.pkl", "wb") as f:
         pickle.dump(unlabeled_ps, f)
-    with open(model_folder+r"\over_threshold_nums_for_positive_test.pkl", "wb") as f:
+    with open(model_folder+"/over_threshold_nums_for_positive_test.pkl", "wb") as f:
         pickle.dump(positive_overthreshold, f)
-    with open(model_folder+r"\over_threshold_nums_for_unlabeled_test.pkl", "wb") as f:
+    with open(model_folder+"/over_threshold_nums_for_unlabeled_test.pkl", "wb") as f:
         pickle.dump(unlabeled_overthreshold, f)
 

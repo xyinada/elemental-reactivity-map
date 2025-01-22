@@ -1,0 +1,99 @@
+{
+    "files_and_directories": {
+        "data_source_file": "./example/data/mp.csv",
+        "source_name": "mp",
+        "save_dir": "./example/result_mp"
+    },
+    "condition": {
+        "composition_column_name": "composition",
+        "property_column_name": "composition",
+        "propety_selection_method": "all",
+        "property_filter": {
+            "value_max": -1,
+            "value_min": -1,
+            "name": "",
+            "ratio": 0.5
+        }
+    },
+    "data": {
+        "data_num":{
+            "positive_test_data": 2000,
+            "positive_train_data": 10000,
+            "unlabeled_test_data": 2000,
+            "reliable_negative_train_data": 10000,
+            "positive_train_data_dup": "auto"
+        },
+        "parameters": {
+            "knn_k_list": [1, 2, 3, 4, 5],
+            "rn_lower_ratio_list": [0.25, 0.5, 0.75, 0.8, 0.85, 0.9, 0.95, 1],
+            "element_parameter": [
+                {"source_file":"./example/parameter/CMP.csv", "dim":80, "name": "CMP"},
+                {"source_file":"./example/parameter/CRD.csv", "dim":80, "name": "CRD"},
+                {"source_file":"./example/parameter/TPL.csv", "dim":80, "name": "TPL"}
+            ]
+        }
+    },
+    "leraning": {
+        "learning_rate": [0.0001],
+        "batch_size": [100],
+        "epoch": [100],
+        "node_nums": [[128, 128, 128, 1]],
+        "model_num": 10
+    },
+    "heatmaps": [
+        {
+            "name": "heatmap_mp",
+            "mark_sources": [
+                {
+                    "file":"./example/data/mp.csv",
+                    "composition_column": "composition",
+                    "property_column": "property",
+                    "propety_selection_method": "all",
+                    "property_filter": {
+                        "value_max": -1,
+                        "value_min": -1,
+                        "name": "",
+                        "ratio": 0.5
+                    },
+                    "mark": "★",
+                    "label": "MP",
+                    "square_color": "r"
+                },
+                {
+                    "file":"./example/data/icsd_hq.csv",
+                    "composition_column": "composition",
+                    "property_column": "property",
+                    "propety_selection_method": "all",
+                    "property_filter": {
+                        "value_max": -1,
+                        "value_min": -1,
+                        "name": "",
+                        "ratio": 0.5
+                    },
+                    "mark": "◆",
+                    "label": "ICSD (HQ)",
+                    "square_color": "b"
+                },
+                {
+                    "file":"./example/data/icsd_lq.csv",
+                    "composition_column_name": "composition",
+                    "property_column": "property",
+                    "propety_selection_method": "all",
+                    "property_filter": {
+                        "value_max": -1,
+                        "value_min": -1,
+                        "name": "",
+                        "ratio": 0.5
+                    },
+                    "mark": "▲",
+                    "label": "ICSD (LQ)",
+                    "square_color": "b"
+                }
+            ]
+        },
+        {
+            "name": "heatmap_mp_blue",
+            "mark_sources": []
+        }
+    ]
+}
