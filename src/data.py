@@ -31,33 +31,9 @@ import pandas as pd
 
 random.seed(0)
 
-def load_settings_(path):
-    print("Load settings.")
-    with open(path, "r") as f:
-        lines = f.readlines()
-    ret = {}
-    list_data = ["knn_k","rn_lower_ratio",
-                 "learning_rate", "batch_size", "epoch", "node_nums",
-                 "heatmap_name", "heatmap_source", "heatmap_composition_column",
-                 "heatmap_property_column", "heatmap_property_selection_method",
-                 "heatmap_property_selection_ratio", "heatmap_property_min",
-                 "heatmap_property_max", "heatmap_property_name",
-                 "heatmap_mark", "heatmap_mark_labels", "heatmap_color"]
-    for line in lines:
-        l = line.strip().split(",")
-        while l[-1] == "":
-            l = l[:-1]
-        if len(l) == 1:
-            ret[l[0]] = False
-        elif l[0] in list_data:
-            ret[l[0]] = l[1:]
-        else:
-            ret[l[0]] = l[1]
-    return ret
-
 def load_config(path):
     print("Load config.")
-    with open(filename, 'r', encoding='utf-8') as f:
+    with open(path, 'r', encoding='utf-8') as f:
         data = json.load(f)
     return data
 
@@ -111,7 +87,7 @@ def load_element_set_data(config):
 
 def load_compounds_data(config, source_file, composition_column, property_column, method,
                         property_min=0, property_max=0, property_name="", property_selection_ratio=0):
-    path = config["files_and_directories"]["data_source_file"]
+    path = source_file
     df = pd.read_csv(path)
     df = df[df[composition_column] != ""]
     df = df.dropna(subset=[property_column, composition_column])
@@ -165,24 +141,26 @@ def select_test_data(elemsets, config):
     positive_elemsets = copy.deepcopy(elemsets)
     random.shuffle(positive_elemsets)
     random.shuffle(unlabeled_elemsets)
-    if config["data"]["data_num"]["positive_test_data"] >= 1:
-        positive_test_num = int(["data"]["data_num"]["positive_test_data"])
-    else config["data"]["data_num"]["positive_test_data"]:
+    if int(config["data"]["data_num"]["positive_test_data"]) >= 1:
+        positive_test_num = int(config["data"]["data_num"]["positive_test_data"])
+    else:
         positive_test_num = int(len(positive_elemsets)*float(config["data"]["data_num"]["positive_test_data"]))
     unlabeled_test_num = int(config["data"]["data_num"]["unlabeled_test_data"])
-    if not "positive_train_data" in config["data"]["data_num"] or int(config["data"]["data_num"]["positive_train_data"]) <= 0:
+    if not "positive_train_data" in config["data"]["data_num"] or int(config["data"]["data_num"]["positive_train_data"]) < 0:
         positive_train_num = len(positive_elemsets)-positive_test_num
-    else:
+    elif int(config["data"]["data_num"]["positive_train_data"]) >= 1:
         positive_train_num = int(config["data"]["data_num"]["positive_train_data"])
+    else:
+        positive_train_num = int(len(positive_elemsets)*float(config["data"]["data_num"]["positive_train_data"]))
     positive_test = positive_elemsets[:positive_test_num]
     positive_train = positive_elemsets[positive_test_num:positive_test_num+positive_train_num]
     unlabeled_test = unlabeled_elemsets[:unlabeled_test_num]
     unlabeled_train = unlabeled_elemsets[unlabeled_test_num:]
-    
-    print(len(positive_train))
-    print(len(unlabeled_train)+len(unlabeled_test))
-    print(len(positive_elemsets)+len(unlabeled_test)+len(unlabeled_train))
-    os.mkdirs(config["files_and_directories"]["save_dir"]+"/train_and_test_data", exist_ok=True)
+
+    print("All element set data num:",len(positive_elemsets)+len(unlabeled_test)+len(unlabeled_train))
+    print("Positive data num: All-{}, Train-{}, Test{}".format(len(positive_elemsets), len(positive_train), len(positive_test)))
+    print("Unlabeled data num: All-{}, Test {}".format(len(unlabeled_train)+len(unlabeled_test), len(unlabeled_test)))
+    os.makedirs(config["files_and_directories"]["save_dir"]+"/train_and_test_data", exist_ok=True)
     
     with open(config["files_and_directories"]["save_dir"]+"/train_and_test_data/positive_all.pkl", "wb") as f:
         pickle.dump(positive_elemsets, f)

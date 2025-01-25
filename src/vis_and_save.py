@@ -52,8 +52,8 @@ def visualize_test_prediction(config):
                               [node_nums for node_nums in config["learning"]["node_nums"]])
     ths = [i/10 for i in range(1,10)]
     xs = [float(x) for x in config["data"]["parameters"]["rn_lower_ratio_list"]]
-    os.mkdirs(folder+"/fig", exist_ok=True)
-    with open(folder+"/fig/result.csv", "w") as f:
+    os.makedirs(folder+"/fig", exist_ok=True)
+    with open(folder+"/result.csv", "w") as f:
         f.write("knn_k,rn_lower_ratio,learning_rate,batch_size,epoch,node_nums,")
         f.write(",".join(["positive_test_over_threshold={}".format(th) for th in ths])+",")
         f.write(",".join(["unlabeled_test_over_threshold={}".format(th) for th in ths])+",")
@@ -65,7 +65,7 @@ def visualize_test_prediction(config):
             posposr_all = defaultdict(list)
             unlposr_all = defaultdict(list)
             for rn_lower_ratio in [float(rn_lower_ratio) for rn_lower_ratio in config["data"]["parameters"]["rn_lower_ratio_list"]]:
-                model_folder = folder+"/ml_model/knn-k={}_rn-lower-ratio={}_lrate={}_bsize={}_epoch={}_nodenums={}".format(knn_k, rn_lower_ratio, l_rate, batch_size, epoch, node_nums)
+                model_folder = folder+"/ml_model/knn-k={}_rn-lower-ratio={:.2f}_lrate={}_bsize={}_epoch={}_nodenums={}".format(knn_k, rn_lower_ratio, l_rate, batch_size, epoch, "-".join([str(n) for n in node_nums]))
                 with open(model_folder+"/sorted_predicted_value_for_positive_test.pkl", "rb") as f:
                     pospreds_all.append(pickle.load(f))
                 with open(model_folder+"/sorted_predicted_value_for_unlabeled_test.pkl", "rb") as f:
@@ -77,15 +77,15 @@ def visualize_test_prediction(config):
                 for th in ths:
                     posposr_all[th].append(posposr[th])
                     unlposr_all[th].append(unlposr[th])
-                with open(folder+"/fig/result.csv", "a") as f:
-                    f.write("{},{},{},{},{},{},".format(knn_k,rn_lower_ratio,l_rate,batch_size,epoch,node_nums))
+                with open(folder+"/result.csv", "a") as f:
+                    f.write("{},{},{},{},{},{},".format(knn_k,rn_lower_ratio,l_rate,batch_size,epoch,"-".join([str(n) for n in node_nums])))
                     f.write(",".join([str(posposr[th]) for th in ths])+",")
                     f.write(",".join([str(unlposr[th]) for th in ths])+",")
                     f.write(str(sum([(pospreds_all[-1][i+1]-pospreds_all[-1][i])*i/len(pospreds_all[-1]) for i in range(len(pospreds_all[-1])-1)]))+",")
                     f.write(str(sum([(unlpreds_all[-1][i+1]-unlpreds_all[-1][i])*i/len(unlpreds_all[-1]) for i in range(len(unlpreds_all[-1])-1)]))+"\n")
-            name = "knn-k={}_lrate={}_bsize={}_epoch={}_nodenums={}".format(knn_k, l_rate, batch_size, epoch, node_nums)
-            plot_positive_pred_ratio(xs, posposr_all, "positive_test"+name, folder+r"\fig")
-            plot_positive_pred_ratio(xs, unlposr_all, "unlabeled_test"+name, folder+r"\fig")
+            name = "knn-k={}_lrate={}_bsize={}_epoch={}_nodenums={}".format(knn_k, l_rate, batch_size, epoch, "-".join([str(n) for n in node_nums]))
+            plot_positive_pred_ratio(xs, posposr_all, "positive_test"+name, folder+"/fig")
+            plot_positive_pred_ratio(xs, unlposr_all, "unlabeled_test"+name, folder+"/fig")
             plot_cumulative(pospreds_all, unlpreds_all,
                             [float(rn_lower_ratio) for rn_lower_ratio in config["data"]["parameters"]["rn_lower_ratio_list"]],
                             folder+"/fig/predicted_value_cumulative_{}.png".format(name))
@@ -107,7 +107,7 @@ def plot_positive_pred_ratio(xs, ys, dataname, save_folder):
     plt.xlabel("x (%)")
     plt.ylabel("Percentage of Data Predicted as Positive (%)")
     plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
-    plt.savefig(save_folder+r"\predicted_as_positive_ratio_{}.png".format(dataname),bbox_inches='tight')
+    plt.savefig(save_folder+"/predicted_as_positive_ratio_{}.png".format(dataname),bbox_inches='tight')
     plt.show()
 
 def plot_cumulative(pos, unl, rn_lower_ratio, save_file):
@@ -144,10 +144,10 @@ def gen_heatmap_all(config):
                               [node_nums for node_nums in config["learning"]["node_nums"]])
     for l_rate, batch_size, epoch, node_nums in iters:
         for knn_k in [int(k) for k in config["data"]["parameters"]["knn_k_list"]]:
-            for rn_lower_ratio in [float(k) for k in config["data"]["rn_lower_ratio_list"]]:
+            for rn_lower_ratio in [float(r) for r in config["data"]["parameters"]["rn_lower_ratio_list"]]:
                 print("")
-                print("Generate heatmap : knn_k = {}, rn_lower_ratio = {}, l_rate = {}, batch_size = {}, epoch = {}, node_nums = {}".format(knn_k, rn_lower_ratio, l_rate, batch_size, epoch, node_nums))
-                model_folder = folder+"/ml_model/knn-k={}_rn-lower-ratio={}_lrate={}_bsize={}_epoch={}_nodenums={}".format(knn_k, rn_lower_ratio, l_rate, batch_size, epoch, node_nums)
+                print("Generate heatmap : knn_k = {}, rn_lower_ratio = {:.2f}, l_rate = {}, batch_size = {}, epoch = {}, node_nums = {}".format(knn_k, rn_lower_ratio, l_rate, batch_size, epoch, "-".join([str(n) for n in node_nums])))
+                model_folder = folder+"/ml_model/knn-k={}_rn-lower-ratio={:.2f}_lrate={}_bsize={}_epoch={}_nodenums={}".format(knn_k, rn_lower_ratio, l_rate, batch_size, epoch, "-".join([str(n) for n in node_nums]))
                 for i in range(len(config["heatmaps"])):
                     generate_heatmap(config, model_folder, knn_k, rn_lower_ratio, i)
 
@@ -161,13 +161,13 @@ def generate_heatmap(config, model_folder, knn_k, rn_lower_ratio, idx):
     elem_parameter = data.load_element_parameter_from_config(config)
     elements, _ = get_elements()
     use_elements = list(elem_parameter.keys())
-    save_folder = model_folder+"/"+config["heatmaps"][idx]["name"]
-    os.mkdirs(save_folder+"/heatmap_html", exist_ok=True)
-    os.mkdir(save_folder+"/heatmap_png", exist_ok=True)
+    save_folder = model_folder.replace("ml_model","fig")+"/"+config["heatmaps"][idx]["name"]
+    os.makedirs(save_folder+"/heatmap_html", exist_ok=True)
+    os.makedirs(save_folder+"/heatmap_png", exist_ok=True)
     
     models = []
     for i in range(int(config["learning"]["model_num"])):
-        models.append(tf.keras.models.load_model(model_folder+"/model_{}.tf".format(i)))
+        models.append(tf.keras.models.load_model(model_folder+"/model_{}.keras".format(i)))
     for elem1 in tqdm.tqdm(use_elements):
         #print(i)
         ternary = []
@@ -193,9 +193,9 @@ def generate_heatmap(config, model_folder, knn_k, rn_lower_ratio, idx):
                    "hov_score", #5
                    ]
         data_dicts = []
-        heatmap_settings = {"source": [d["file"] for d in config["heatmaps"][idx]["mark_soruces"]],
-                            "composition": [d["composition_column"] for d in config["heatmaps"][idx]["mark_sources"]],
-                            "property": [d["property_column"] for d in config["heatmaps"][idx]["mark_sources"]],
+        heatmap_settings = {"source": [d["file"] for d in config["heatmaps"][idx]["mark_sources"]],
+                            "composition": [d["composition_column_name"] for d in config["heatmaps"][idx]["mark_sources"]],
+                            "property": [d["property_column_name"] for d in config["heatmaps"][idx]["mark_sources"]],
                             "method": [d["property_selection_method"] for d in config["heatmaps"][idx]["mark_sources"]],
                             "ratio": [d["property_filter"]["ratio"] for d in config["heatmaps"][idx]["mark_sources"]],
                             "min": [d["property_filter"]["value_min"] for d in config["heatmaps"][idx]["mark_sources"]],
@@ -239,10 +239,11 @@ def generate_heatmap(config, model_folder, knn_k, rn_lower_ratio, idx):
             sq_data["hov_score"] = "{:.4f}".format(k)
             
             elemset = tuple(sorted(list(set([elem1,elem2,elem3]))))
-            for i, hd in enumerate(columns[6:len(columns)-2]):
-                sq_data[hd] = ", ".join(data_dicts[i][elemset])
             
             if len(config["heatmaps"][idx]["mark_sources"]) != 0:
+                for i, hd in enumerate(columns[6:len(columns)-2]):
+                    sq_data[hd] = ", ".join(data_dicts[i][elemset])
+
                 marks = heatmap_settings["marks"]
                 for i, hd in enumerate(columns[6:len(columns)-2]):
                     if len(sq_data[hd]) != 0:
@@ -263,6 +264,8 @@ def generate_heatmap(config, model_folder, knn_k, rn_lower_ratio, idx):
                         break
                 else:
                     sq_data["color_score"] = k*(1-default_val-buf)+default_val+buf
+            else:         
+                sq_data["color_score"] = k*(1-default_val-buf)+default_val+buf
             
             ternary_data.append([sq_data[cn] for cn in columns])
         
@@ -306,30 +309,33 @@ def generate_heatmap(config, model_folder, knn_k, rn_lower_ratio, idx):
         x = dodge("element2", 0., range=p.x_range)
         text_props = dict(source=df, text_align="center", text_baseline="middle")
         
-        p.text(x=x, y=dodge("element3", 0., range=p.y_range),
+        if len(config["heatmaps"][idx]["mark_sources"]) != 0:
+            p.text(x=x, y=dodge("element3", 0., range=p.y_range),
                text="mark", text_font_style="normal", text_color="mark_color", **text_props)
+        else:
+            p.text(x=x, y=dodge("element3", 0., range=p.y_range), **text_props)
         
         p.hover.renderers = [r]
         
-        save(p, filename=save_folder+r"\heatmap_html\{}.html".format(elem1), title=elem1)
+        save(p, filename=save_folder+"/heatmap_html/{}.html".format(elem1), title=elem1)
         
         p.toolbar_location = None
-        export_png(p, filename=save_folder+r"\heatmap_png\{}.png".format(elem1))
+        export_png(p, filename=save_folder+"/heatmap_png/{}.png".format(elem1))
 
         #show(p)
 
 def save_vals_all(config):
-    folder = config["files_and_directories"]["save_fir"]
+    folder = config["files_and_directories"]["save_dir"]
     iters = itertools.product([float(l_rate) for l_rate in config["learning"]["learning_rate"]],
                               [int(batch_size) for batch_size in config["learning"]["batch_size"]],
                               [int(epoch) for epoch in config["learning"]["epoch"]],
                               [node_nums for node_nums in config["learning"]["node_nums"]])
     for l_rate, batch_size, epoch, node_nums in iters:
         for knn_k in [int(k) for k in config["data"]["parameters"]["knn_k_list"]]:
-            for rn_lower_ratio in [float(k) for k in config["data"]["parameters"]["rn_lower_ratio"]]:
+            for rn_lower_ratio in [float(k) for k in config["data"]["parameters"]["rn_lower_ratio_list"]]:
                 print("")
-                print("Save predicted values : knn_k = {}, rn_lower_ratio = {}, l_rate = {}, batch_size = {}, epoch = {}, node_nums = {}".format(knn_k, rn_lower_ratio, l_rate, batch_size, epoch, node_nums))
-                model_folder = folder+"/ml_model/knn-k={}_rn-lower-ratio={}_lrate={}_bsize={}_epoch={}_nodenums={}".format(knn_k, rn_lower_ratio, l_rate, batch_size, epoch, node_nums)
+                print("Save predicted values : knn_k = {}, rn_lower_ratio = {:.2f}, l_rate = {}, batch_size = {}, epoch = {}, node_nums = {}".format(knn_k, rn_lower_ratio, l_rate, batch_size, epoch, "-".join([str(n) for n in node_nums])))
+                model_folder = folder+"/ml_model/knn-k={}_rn-lower-ratio={:.2f}_lrate={}_bsize={}_epoch={}_nodenums={}".format(knn_k, rn_lower_ratio, l_rate, batch_size, epoch, "-".join([str(n) for n in node_nums]))
                 for i in range(len(config["heatmaps"])):
                     save_vals(config, model_folder, knn_k, rn_lower_ratio,i)
 
@@ -337,12 +343,12 @@ def save_vals(config, model_folder, knn_k, rn_lower_ratio, idx):
     elem_parameter = data.load_element_parameter_from_config(config)
     elements, _ = get_elements()
     use_elements = list(elem_parameter.keys())
-    save_folder = model_folder+"/"+config["heatmaps"][idx]["name"]    
+    save_folder = model_folder.replace("ml_model", "fig")+"/"+config["heatmaps"][idx]["name"]    
     
     data_dicts = []
-    heatmap_settings = {"source": [d["file"] for d in config["heatmaps"][idx]["mark_soruces"]],
-                        "composition": [d["composition_column"] for d in config["heatmaps"][idx]["mark_sources"]],
-                        "property": [d["property_column"] for d in config["heatmaps"][idx]["mark_sources"]],
+    heatmap_settings = {"source": [d["file"] for d in config["heatmaps"][idx]["mark_sources"]],
+                        "composition": [d["composition_column_name"] for d in config["heatmaps"][idx]["mark_sources"]],
+                        "property": [d["property_column_name"] for d in config["heatmaps"][idx]["mark_sources"]],
                         "method": [d["property_selection_method"] for d in config["heatmaps"][idx]["mark_sources"]],
                         "ratio": [d["property_filter"]["ratio"] for d in config["heatmaps"][idx]["mark_sources"]],
                         "min": [d["property_filter"]["value_min"] for d in config["heatmaps"][idx]["mark_sources"]],
@@ -369,7 +375,7 @@ def save_vals(config, model_folder, knn_k, rn_lower_ratio, idx):
     
     models = []
     for i in range(int(config["learning"]["model_num"])):
-        models.append(tf.keras.models.load_model(model_folder+r"\model_{}.tf".format(i)))
+        models.append(tf.keras.models.load_model(model_folder+"/model_{}.keras".format(i)))
     
     fins = set()
     ternary = []
@@ -408,8 +414,8 @@ def save_vals(config, model_folder, knn_k, rn_lower_ratio, idx):
         save_data.append(sd)
     
     save_data.sort(key=lambda x:x[0])
-    os.mkdirs(save_folder+"/{}".format(heatmap_settings["labels"][0]), exist_ok=True)
-    with open(save_folder+"/{}/knn_k={}_rn-lower_ratio={}.csv".format(heatmap_settings["labels"][0], knn_k, rn_lower_ratio), "w") as f:
+    os.makedirs(save_folder, exist_ok=True)
+    with open(save_folder+"/heatmap_data.csv", "w") as f:
         f.write(",".join(columns)+",Unlabeled"+"\n")
         for sd in save_data:
             f.write(",".join(sd)+"\n")
@@ -451,15 +457,15 @@ def unlabeled_predvals_vs_knnscore_score_plot(config):
     
     elem_parameter = data.load_element_parameter_from_config(config)
     
-    os.mkdirs(folder+r"/fig", exist_ok=True)
+    os.makedirs(folder+"/fig", exist_ok=True)
     
     for l_rate, batch_size, epoch, node_nums in iters:
         for knn_k in [int(k) for k in config["data"]["parameters"]["knn_k_list"]]:
             for rn_lower_ratio in [float(rn_lower_ratio) for rn_lower_ratio in config["data"]["parameters"]["rn_lower_ratio_list"]]:
-                model_folder = folder+"/ml_model/knn-k={}_rn-lower-ratio={}_lrate={}_bsize={}_epoch={}_nodenums={}".format(knn_k, rn_lower_ratio, l_rate, batch_size, epoch, node_nums)
+                model_folder = folder+"/ml_model/knn-k={}_rn-lower-ratio={:.2f}_lrate={}_bsize={}_epoch={}_nodenums={}".format(knn_k, rn_lower_ratio, l_rate, batch_size, epoch, "-".join([str(n) for n in node_nums]))
                 models = []
                 for i in range(int(config["learning"]["model_num"])):
-                    models.append(tf.keras.models.load_model(model_folder+"/model_{}.tf".format(i)))
+                    models.append(tf.keras.models.load_model(model_folder+"/model_{}.keras".format(i)))
                 #モデルの読み込み
                 #予測
                 train_ternary_param = []

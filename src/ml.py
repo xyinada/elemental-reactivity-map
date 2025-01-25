@@ -32,13 +32,36 @@ warnings.simplefilter(action='ignore', category=Warning)
 tf.get_logger().setLevel('ERROR')
 tf.autograph.set_verbosity(0)
 
+class ReshapeLayer(tf.keras.layers.Layer):
+    def __init__(self, target_shape, **kwargs):
+        super(ReshapeLayer, self).__init__(**kwargs)
+        self.target_shape = target_shape
+    def call(self, inputs):
+        return tf.reshape(inputs, self.target_shape)
+    def get_config(self):
+        config = super(ReshapeLayer, self).get_config()
+        config.update({"target_shape": self.target_shape})
+        return config
+
+class ReduceSumLayer(tf.keras.layers.Layer):
+    def __init__(self, axis, **kwargs):
+        super(ReduceSumLayer, self).__init__(**kwargs)
+        self.axis = axis
+    def call(self, inputs):
+        return tf.reduce_sum(inputs, self.axis)
+    def get_config(self):
+        config = super(ReduceSumLayer, self).get_config()
+        config.update({"axis": self.axis})
+        return config
+
 def build_model(node_nums,vec_len,l_rate):
     input_data = tf.keras.layers.Input(shape=(3,vec_len),name="input")
-    input_data_reshape = tf.reshape(input_data,[-1,vec_len])
+    input_data_reshape = ReshapeLayer((-1, vec_len))(input_data)
     layer0 = tf.keras.layers.Dense(node_nums[0],activation="relu",name="layer0")(input_data_reshape)
     layer1 = tf.keras.layers.Dense(node_nums[1],activation="relu",name="layer1")(layer0)
-    layer1 = tf.reshape(layer1,[-1,3,node_nums[1]])
-    layer1_maxpool = tf.reshape(tf.reduce_max(layer1,1),(-1,node_nums[1]))
+    layer1_reshape = ReshapeLayer((-1, 3, node_nums[1]))(layer1)
+    layer1_redsum = ReduceSumLayer(1)(layer1_reshape)
+    layer1_maxpool = ReshapeLayer((-1, node_nums[1]))(layer1_redsum)
     layer2 = tf.keras.layers.Dense(node_nums[2],activation="relu",name="layer2")(layer1_maxpool)
     layer3 = tf.keras.layers.Dense(node_nums[3],activation="sigmoid",name="layer3")(layer2)
     model = tf.keras.Model(inputs=input_data,outputs=layer3)
@@ -46,10 +69,10 @@ def build_model(node_nums,vec_len,l_rate):
                    loss=tf.keras.losses.BinaryCrossentropy())
     return model
 
-def train_all_config(config):
+def train_all(config):
     print("Train models.")
-    iters = itertools.product([int(k) for k in  config["data"]["parameters"]["knn_k"]],
-                              [float(rn_lower_ratio) for rn_lower_ratio in  config["data"]["parameters"]["rn_lower_ratio"]],
+    iters = itertools.product([int(k) for k in  config["data"]["parameters"]["knn_k_list"]],
+                              [float(rn_lower_ratio) for rn_lower_ratio in  config["data"]["parameters"]["rn_lower_ratio_list"]],
                               [float(l_rate) for l_rate in config["learning"]["learning_rate"]],
                               [int(batch_size) for batch_size in config["learning"]["batch_size"]],
                               [int(epoch) for epoch in config["learning"]["epoch"]],
@@ -59,21 +82,21 @@ def train_all_config(config):
         train_and_evaluate(config, knn_k, rn_lower_ratio, l_rate, batch_size, epoch, node_nums)
 
 def train_and_evaluate(config, knn_k, rn_lower_ratio, l_rate, batch_size, epoch, node_nums):
-    model_folder = config["files_and_directories"]["save_dir"]+"/ml_model/knn-k={}_rnlr={}_lr={}_bs={}_ep={}_nn={}".format(knn_k, rn_lower_ratio, l_rate, batch_size, epoch, node_nums)
+    model_folder = config["files_and_directories"]["save_dir"]+"/ml_model/knn-k={}_rn-lower-ratio={:.2f}_lrate={}_bsize={}_epoch={}_nodenums={}".format(knn_k, rn_lower_ratio, l_rate, batch_size, epoch, "-".join([str(n) for n in node_nums]))
     print(model_folder)
-    os.mkdirs(model_folder, exist_ok=True)
+    os.makedirs(model_folder, exist_ok=True)
     input_data = make_input_data(config, knn_k, rn_lower_ratio)
     train_models(config, model_folder, l_rate, batch_size, epoch, node_nums, input_data)
-    evaluate_models(config, model_folder, input_data)
+    evaluate_models(model_folder, input_data)
 
 def train_models(config, model_folder, l_rate, batch_size, epoch, node_nums, input_data):
-    vec_len = sum([int(x) for x in config["data"]["parameters"]["element_parameter"]["dim"]])
+    vec_len = sum([int(x["dim"]) for x in config["data"]["parameters"]["element_parameter"]])
     for i in range(int(config["learning"]["model_num"])):
-        model = build_model([int(nns) for nns in node_nums.split("-")], vec_len, l_rate)
+        model = build_model([int(n) for n in node_nums], vec_len, l_rate)
         history = model.fit(input_data["train_x"],input_data["train_y"],
                             validation_data=[input_data["test_x"],input_data["test_y"]],
                             batch_size=batch_size, epochs=epoch, verbose=0)
-        model.save(model_folder+"/model_{}.tf".format(i))
+        model.save(model_folder+"/model_{}.keras".format(i))
         hist_df = pd.DataFrame(history.history)
         hist_df.to_csv(model_folder+'/history_{}.csv'.format(i))
         tf.keras.backend.clear_session()
@@ -94,7 +117,7 @@ def make_input_data(config, knn_k, rn_lower_ratio):
     folder = config["files_and_directories"]["save_dir"]
     with open(folder+"/train_and_test_data/positive_train.pkl", "rb") as f:
         positive_train = pickle.load(f)
-    with open(folder+"/train_and_test_data/rn_knn-k={}_rn-lower-ratio={}_train.pkl".format(knn_k,rn_lower_ratio), "rb") as f:
+    with open(folder+"/train_and_test_data/rn_knn-k={}_rn-lower-ratio={:.2f}_train.pkl".format(knn_k,rn_lower_ratio), "rb") as f:
         rn_train = pickle.load(f)
     with open(folder+"/train_and_test_data/positive_test.pkl", "rb") as f:
         positive_test = pickle.load(f)
@@ -123,7 +146,7 @@ def make_input_data(config, knn_k, rn_lower_ratio):
     return input_data
 
 def predict(model_folder, xs):
-    model_paths = glob.glob(model_folder+r"\\*.tf")
+    model_paths = glob.glob(model_folder+"/*.keras")
     preds = np.zeros(shape=(len(xs),))
     for path in model_paths:
         model = tf.keras.models.load_model(path)
