@@ -30,7 +30,6 @@ from bokeh.transform import linear_cmap
 from bokeh.transform import dodge, factor_cmap
 from bokeh.io import save, export_png
 import pymatgen.core.composition as pcmp
-#from mpld3 import show_d3, fig_to_d3, plugins
 
 import warnings
 
@@ -127,11 +126,9 @@ def plot_cumulative(pos, unl, rn_lower_ratio, save_file):
                  c=ucolors[i])
     plt.xlabel('Synthesizability',fontsize=20)
     plt.ylabel('Cumulative Distribution of Element Sets',fontsize=20)
-    #plt.title(t,fontsize=20)
     plt.xlim(0., 1.)
     plt.ylim(0., 1.)
     plt.grid()
-    #plt.legend(loc='upper left')
     plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
     plt.savefig(save_file, bbox_inches='tight')
     plt.show()
@@ -169,7 +166,6 @@ def generate_heatmap(config, model_folder, knn_k, rn_lower_ratio, idx):
     for i in range(int(config["learning"]["model_num"])):
         models.append(tf.keras.models.load_model(model_folder+"/model_{}.keras".format(i)))
     for elem1 in tqdm.tqdm(use_elements):
-        #print(i)
         ternary = []
         ternary_param = []
         for elem2 in use_elements:
@@ -185,12 +181,12 @@ def generate_heatmap(config, model_folder, knn_k, rn_lower_ratio, idx):
         prediction = np.clip(a=prediction,a_min=0,a_max=1.)
         
         ternary_data = []
-        columns = ["element1", #0
-                   "element2", #1
-                   "element3", #2
-                   "color_score", #3
-                   "hov_element", #4
-                   "hov_score", #5
+        columns = ["element1",
+                   "element2",
+                   "element3",
+                   "color_score",
+                   "hov_element",
+                   "hov_score",
                    ]
         data_dicts = []
         heatmap_settings = {"source": [d["file"] for d in config["heatmaps"][idx]["mark_sources"]],
@@ -321,8 +317,6 @@ def generate_heatmap(config, model_folder, knn_k, rn_lower_ratio, idx):
         
         p.toolbar_location = None
         export_png(p, filename=save_folder+"/heatmap_png/{}.png".format(elem1))
-
-        #show(p)
 
 def save_vals_all(config):
     folder = config["files_and_directories"]["save_dir"]
@@ -466,8 +460,7 @@ def unlabeled_predvals_vs_knnscore_score_plot(config):
                 models = []
                 for i in range(int(config["learning"]["model_num"])):
                     models.append(tf.keras.models.load_model(model_folder+"/model_{}.keras".format(i)))
-                #モデルの読み込み
-                #予測
+
                 train_ternary_param = []
                 test_ternary_param = []
                 train_knnscore = []
@@ -502,7 +495,6 @@ def unlabeled_predvals_vs_knnscore_score_plot(config):
                 train_prediction = np.clip(a=train_prediction,a_min=0,a_max=1.)
                 test_prediction = np.clip(a=test_prediction,a_min=0,a_max=1.)
                 
-                #プロット
                 fig = plt.figure(figsize=(10,10))
                 plt.plot(train_knnscore, train_prediction)
                 plt.grid()

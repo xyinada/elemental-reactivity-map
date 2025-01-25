@@ -143,12 +143,10 @@ def calc_dist(aa, bb, sim_array, elem_num):
     if len(a) == 3 and len(b) == 3:
         l = [(b[0],b[1],b[2]),(b[0],b[2],b[1]),(b[1],b[0],b[2]),(b[1],b[2],b[0]),(b[2],b[0],b[1]),(b[2],b[1],b[0])]
         x = max([sim_array[calc_idx(m[0],a[0],elem_num)]+sim_array[calc_idx(m[1],a[1],elem_num)]+sim_array[calc_idx(m[2],a[2],elem_num)] for m in l])
-        #y = max([sim_data[(a[0],m[0])]+sim_data[(a[1],m[1])]+sim_data[(a[2],m[2])] for m in l])
         return x
     elif len(a) == 2 and len(b) == 2:
         l = [(b[0],b[1]),(b[1],b[0])]
         x = max([sim_array[calc_idx(m[0],a[0],elem_num)]+sim_array[calc_idx(m[1],a[1],elem_num)] for m in l])
-        #y = max([sim_data[(a[0],m[0])]+sim_data[(a[1],m[1])] for m in l])
         return x*1.5
     elif len(a) == 1 and len(b) == 1:
         return sim_array[calc_idx(a[0],b[0],elem_num)]*3.
