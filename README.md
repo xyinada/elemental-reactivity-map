@@ -33,10 +33,10 @@ For more detailed information, please see the dockerfile.
 
 ### Execution
 
-Prepare a training dataset and a configuration file (in JSON format), then run:
+Prepare a training dataset and a configuration file (in JSON format), then run in elemental-reactivity-map directory:
 
 ```bash
-python3 main.py /path/to/your_config_file.json
+python3 ./src/main.py ./example/config/mp_example.json
 ```
 
 ### Training Data
@@ -77,16 +77,16 @@ Example configuration file structure:
   "data": {
     "data_num": {
       "positive_test_data": 2000, // Number (>=1) or ratio (0<value<1) of data used as positive test data
-      "positive_train_data": 10000, // Number (>=1) or ratio (0<value<1) of data used as positive training data
+      "positive_train_data": 12000, // Number (>=1) or ratio (0<value<1) of data used as positive training data. When the value is minus, not test data wre all used as positive training data
       "unlabeled_test_data": 2000, // Number of data used as unlabeled test data
-      "reliable_negative_train_data": 10000, // Number of data used as reliable negative training data
+      "reliable_negative_train_data": 12000, // Number of data used as reliable negative training data
       "positive_train_data_dup": "auto" // Oversampling of positive data if needed.
                                         // When the value is "auto", positive_train_data are oversampled to be same the number of reliable_neagative_train_data.
                                         // When the value is number, positive_train_data are oversampled specified times.
     },
     "parameters": {
       "knn_k_list": [1, 2, 3, 4, 5], // k-NN parameters for data selection. Training data will be generated for all these values.
-      "rn_lower_ratio_list": [0.25, 0.5, 0.75, 0.8, 0.85, 0.9, 0.95, 1], // Reliable negative data ratio. Training data will be generated for all these values.
+      "rn_lower_ratio_list": [0.25, 0.5, 0.75, 1.0], // Reliable negative data ratio. Training data will be generated for all these values.
       "element_parameter": [
         // Specify the file path of the input parameters.
         // These files must have the first line as a header, the first column as the element name, and the second and subsequent columns as the element parameters.
@@ -111,8 +111,8 @@ Example configuration file structure:
       "mark_sources": [
         {
           "file": "./example/data/mp.csv",
-          "composition_column": "composition",
-          "property_column": "property",
+          "composition_column_name": "composition",
+          "property_column_name": "composition",
           "property_selection_method": "all",
           "property_filter": {
             "value_max": -1,
@@ -122,13 +122,13 @@ Example configuration file structure:
           },
           "mark": "★", // Mark symbol for matched compositions
           "label": "MP", // Custom label
-          "square_color": "r" // Matplotlib color name
+          "square_color": "r" // select "r" (red) or "b" (blue)
         }
         {
           "file":"./example/data/icsd_hq.csv",
-          "composition_column": "composition",
-          "property_column": "property",
-          "propety_selection_method": "all",
+          "composition_column_name": "composition",
+          "property_column_name": "composition",
+          "property_selection_method": "all",
           "property_filter": {
             "value_max": -1,
             "value_min": -1,
@@ -137,13 +137,13 @@ Example configuration file structure:
           },
           "mark": "◆",
           "label": "ICSD (HQ)",
-          "square_color": "b"
+          "square_color": "r"
         },
         {
           "file":"./example/data/icsd_lq.csv",
           "composition_column_name": "composition",
-          "property_column": "property",
-          "propety_selection_method": "all",
+          "property_column_name": "composition",
+          "property_selection_method": "all",
           "property_filter": {
             "value_max": -1,
             "value_min": -1,
@@ -152,7 +152,7 @@ Example configuration file structure:
           },
           "mark": "▲",
           "label": "ICSD (LQ)",
-          "square_color": "b"
+          "square_color": "r"
         }
       ]
     }
