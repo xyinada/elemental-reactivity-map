@@ -27,13 +27,13 @@ def gen_rn_training_data(config):
 
 def knn_selection(config):
     folder = config["files_and_directories"]["save_dir"]
-    for knn_k in [int(knn_k) for knn_k in config["data"]["properties"]["knn_k_list"]]:
+    for knn_k in [int(knn_k) for knn_k in config["data"]["parameters"]["knn_k_list"]]:
         positively_scores = calc_positively_scores(knn_k, config)
-        for rn_lower_ratio in [float(r) for r in config["data"]["properties"]["rn_lower_ratio_list"]]:
+        for rn_lower_ratio in [float(r) for r in config["data"]["parameters"]["rn_lower_ratio_list"]]:
             n = int(len(positively_scores)*rn_lower_ratio)
             idxs = random.sample(list(range(n)), int(config["data"]["data_num"]["reliable_negative_train_data"]))
             train_data = [positively_scores[i][0] for i in idxs]
-            with open(folder+"/train_and_test_data/rn_knn-k={}_rn-lower-ratio={}_train.pkl".format(knn_k, rn_lower_ratio), "wb") as f:
+            with open(folder+"/train_and_test_data/rn_knn-k={}_rn-lower-ratio={:.2f}_train.pkl".format(knn_k, rn_lower_ratio), "wb") as f:
                 pickle.dump(train_data, f)
 
 def calc_positively_scores(knn_k, config):
@@ -53,7 +53,7 @@ def calc_unlabeled_similarity_with_positive(config):
     with open(folder+"/train_and_test_data/unlabeled_train.pkl", "rb") as f:
         unlabeled_train = pickle.load(f)
     
-    max_k = max([int(k) for k in config["data"]["parameters"]["knn_k"]])
+    max_k = max([int(k) for k in config["data"]["parameters"]["knn_k_list"]])
     
     elem_parameter = data.load_element_parameter_from_config(config)
     sim_data, elem_rank_dict = calc_element_similarity(elem_parameter)
@@ -82,7 +82,7 @@ def calc_unlabeld_test_similarity_with_positive_train(config):
     with open(folder+"/train_and_test_data/unlabeled_test.pkl", "rb") as f:
         unlabeled_train = pickle.load(f)
     
-    max_k = max([int(k) for k in config["data"]["parameters"]["knn_k"]])
+    max_k = max([int(k) for k in config["data"]["parameters"]["knn_k_list"]])
     
     elem_parameter = data.load_element_parameter_from_config(config)
     sim_data, elem_rank_dict = calc_element_similarity(elem_parameter)
@@ -143,12 +143,10 @@ def calc_dist(aa, bb, sim_array, elem_num):
     if len(a) == 3 and len(b) == 3:
         l = [(b[0],b[1],b[2]),(b[0],b[2],b[1]),(b[1],b[0],b[2]),(b[1],b[2],b[0]),(b[2],b[0],b[1]),(b[2],b[1],b[0])]
         x = max([sim_array[calc_idx(m[0],a[0],elem_num)]+sim_array[calc_idx(m[1],a[1],elem_num)]+sim_array[calc_idx(m[2],a[2],elem_num)] for m in l])
-        #y = max([sim_data[(a[0],m[0])]+sim_data[(a[1],m[1])]+sim_data[(a[2],m[2])] for m in l])
         return x
     elif len(a) == 2 and len(b) == 2:
         l = [(b[0],b[1]),(b[1],b[0])]
         x = max([sim_array[calc_idx(m[0],a[0],elem_num)]+sim_array[calc_idx(m[1],a[1],elem_num)] for m in l])
-        #y = max([sim_data[(a[0],m[0])]+sim_data[(a[1],m[1])] for m in l])
         return x*1.5
     elif len(a) == 1 and len(b) == 1:
         return sim_array[calc_idx(a[0],b[0],elem_num)]*3.

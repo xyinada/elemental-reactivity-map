@@ -7,7 +7,7 @@
     "condition": {
         "composition_column_name": "composition",
         "property_column_name": "composition",
-        "propety_selection_method": "all",
+        "property_selection_method": "all",
         "property_filter": {
             "value_max": -1,
             "value_min": -1,
@@ -18,14 +18,14 @@
     "data": {
         "data_num":{
             "positive_test_data": 2000,
-            "positive_train_data": 10000,
+            "positive_train_data": 12000,
             "unlabeled_test_data": 2000,
-            "reliable_negative_train_data": 10000,
+            "reliable_negative_train_data": 12000,
             "positive_train_data_dup": "auto"
         },
         "parameters": {
             "knn_k_list": [1, 2, 3, 4, 5],
-            "rn_lower_ratio_list": [0.25, 0.5, 0.75, 0.8, 0.85, 0.9, 0.95, 1],
+            "rn_lower_ratio_list": [0.25, 0.5, 0.75, 1.0],
             "element_parameter": [
                 {"source_file":"./example/parameter/CMP.csv", "dim":80, "name": "CMP"},
                 {"source_file":"./example/parameter/CRD.csv", "dim":80, "name": "CRD"},
@@ -33,7 +33,7 @@
             ]
         }
     },
-    "leraning": {
+    "learning": {
         "learning_rate": [0.0001],
         "batch_size": [100],
         "epoch": [100],
@@ -46,9 +46,9 @@
             "mark_sources": [
                 {
                     "file":"./example/data/mp.csv",
-                    "composition_column": "composition",
-                    "property_column": "property",
-                    "propety_selection_method": "all",
+                    "composition_column_name": "composition",
+                    "property_column_name": "composition",
+                    "property_selection_method": "all",
                     "property_filter": {
                         "value_max": -1,
                         "value_min": -1,
@@ -61,9 +61,9 @@
                 },
                 {
                     "file":"./example/data/icsd_hq.csv",
-                    "composition_column": "composition",
-                    "property_column": "property",
-                    "propety_selection_method": "all",
+                    "composition_column_name": "composition",
+                    "property_column_name": "composition",
+                    "property_selection_method": "all",
                     "property_filter": {
                         "value_max": -1,
                         "value_min": -1,
@@ -72,13 +72,13 @@
                     },
                     "mark": "◆",
                     "label": "ICSD (HQ)",
-                    "square_color": "b"
+                    "square_color": "r"
                 },
                 {
                     "file":"./example/data/icsd_lq.csv",
                     "composition_column_name": "composition",
-                    "property_column": "property",
-                    "propety_selection_method": "all",
+                    "property_column_name": "composition",
+                    "property_selection_method": "all",
                     "property_filter": {
                         "value_max": -1,
                         "value_min": -1,
@@ -87,7 +87,7 @@
                     },
                     "mark": "▲",
                     "label": "ICSD (LQ)",
-                    "square_color": "b"
+                    "square_color": "r"
                 }
             ]
         },
