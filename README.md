@@ -13,7 +13,8 @@ This repository contains the code used in the following publication (**details t
 
 ## Dependencies
 
-The following libraries are required to run the project:
+The following libraries are required to run the project.
+For more detailed information, please see the dockerfile.
 
 - TensorFlow (2.16 or later)
 - NumPy
@@ -24,6 +25,9 @@ The following libraries are required to run the project:
 - Seaborn
 - Bokeh
 - tqdm
+- selenium
+- firefox
+- geckodriver
 
 ## Usage
 
