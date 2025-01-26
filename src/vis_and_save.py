@@ -83,13 +83,14 @@ def visualize_test_prediction(config):
                     f.write(str(sum([(pospreds_all[-1][i+1]-pospreds_all[-1][i])*i/len(pospreds_all[-1]) for i in range(len(pospreds_all[-1])-1)]))+",")
                     f.write(str(sum([(unlpreds_all[-1][i+1]-unlpreds_all[-1][i])*i/len(unlpreds_all[-1]) for i in range(len(unlpreds_all[-1])-1)]))+"\n")
             name = "knn-k={}_lrate={}_bsize={}_epoch={}_nodenums={}".format(knn_k, l_rate, batch_size, epoch, "-".join([str(n) for n in node_nums]))
-            plot_positive_pred_ratio(xs, posposr_all, "positive_test"+name, folder+"/fig")
-            plot_positive_pred_ratio(xs, unlposr_all, "unlabeled_test"+name, folder+"/fig")
+            plot_positive_pred_ratio(xs, posposr_all, "positive_test_data", folder+"/fig/{}".format(name))
+            plot_positive_pred_ratio(xs, unlposr_all, "unlabeled_test_data", folder+"/fig/{}".format(name))
             plot_cumulative(pospreds_all, unlpreds_all,
                             [float(rn_lower_ratio) for rn_lower_ratio in config["data"]["parameters"]["rn_lower_ratio_list"]],
-                            folder+"/fig/predicted_value_cumulative_{}.png".format(name))
+                            folder+"/fig/{}".format(name))
 
 def plot_positive_pred_ratio(xs, ys, dataname, save_folder):
+    os.makedirs(save_folder, exist_ok=True)
     ths = [i/10 for i in range(1,10)]
     fig = plt.figure(figsize=(10,10))
     plt.rcParams['font.size'] = 20
@@ -106,10 +107,11 @@ def plot_positive_pred_ratio(xs, ys, dataname, save_folder):
     plt.xlabel("x (%)")
     plt.ylabel("Percentage of Data Predicted as Positive (%)")
     plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
-    plt.savefig(save_folder+"/predicted_as_positive_ratio_{}.png".format(dataname),bbox_inches='tight')
+    plt.savefig(save_folder+"/data_ratio_predicted_as_positive_in_{}.png".format(dataname),bbox_inches='tight')
     plt.show()
 
-def plot_cumulative(pos, unl, rn_lower_ratio, save_file):
+def plot_cumulative(pos, unl, rn_lower_ratio, save_folder):
+    os.makedirs(save_folder, exist_ok=True)
     fig = plt.figure(figsize=(10,10))
     plt.plot([0,1],[0,2000],c="r",alpha=0.5)
     pcmap=cm.get_cmap("viridis")
@@ -130,7 +132,7 @@ def plot_cumulative(pos, unl, rn_lower_ratio, save_file):
     plt.ylim(0., 1.)
     plt.grid()
     plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
-    plt.savefig(save_file, bbox_inches='tight')
+    plt.savefig(save_folder+"/cumulative_distribution_of_predicted_value.png", bbox_inches='tight')
     plt.show()
 
 def gen_heatmap_all(config):
